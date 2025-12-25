@@ -83,6 +83,13 @@ async function sendAdminWhatsAppNotification(order) {
 
     const message = `
 🛒 New Order Arrived!
+
+👤 Name: ${order.customerName}
+📞 Phone: ${order.customerPhone}
+📍 Address: ${order.address}
+🆔 Order ID: ${order.orderId}
+
+
     `;
 
     await twilioClient.messages.create({
