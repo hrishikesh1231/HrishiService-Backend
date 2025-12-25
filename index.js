@@ -133,7 +133,7 @@ app.post("/place-order", upload.single("prescription"), async (req, res) => {
     });
 
     const saved = await order.save();
-    await notifyAdminNewOrder(saved);
+    await notifyAdminNewOrder();
     console.log("✅ ORDER SAVED:", saved.orderId);
 
     

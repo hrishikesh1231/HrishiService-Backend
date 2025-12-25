@@ -1,6 +1,6 @@
 const axios = require("axios");
 
-async function notifyAdminNewOrder(order) {
+async function notifyAdminNewOrder() {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
 
@@ -11,24 +11,10 @@ async function notifyAdminNewOrder(order) {
 
   const url = `https://api.telegram.org/bot${token}/sendMessage`;
 
-  const message = `
-🛒 *New Order Arrived!*
-
-👤 Name: ${order.customerName}
-📞 Phone: ${order.customerPhone}
-📍 Address: ${order.address}
-
-🆔 Order ID: ${order.orderId}
-
-👉 Check admin panel:
-https://hrishi-service-frontend.vercel.app/admin
-  `;
-
   try {
     await axios.post(url, {
       chat_id: chatId,
-      text: message,
-      parse_mode: "Markdown",
+      text: "🛒 New order arrived!\nPlease check the admin panel.\n\n https://hrishi-service-frontend.vercel.app/admin",
     });
     console.log("✅ Telegram notification sent");
   } catch (error) {
