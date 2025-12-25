@@ -16,8 +16,8 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-const admin = require("./firebase");
 let ADMIN_PUSH_TOKEN = null;
+const admin = require("./firebase");
 
 
 
@@ -81,6 +81,7 @@ function uploadBufferToCloudinary(buffer, folder = "prescriptions") {
 //notification firebase
 app.post("/api/save-admin-push-token", (req, res) => {
   ADMIN_PUSH_TOKEN = req.body.token;
+  console.log("✅ ADMIN PUSH TOKEN SAVED:", ADMIN_PUSH_TOKEN);
   res.json({ success: true });
 });
 
@@ -128,16 +129,36 @@ app.post("/place-order", upload.single("prescription"), async (req, res) => {
     });
 
     const saved = await order.save();
+    console.log("✅ ORDER SAVED:", saved.orderId);
 
-    if (ADMIN_PUSH_TOKEN) {
-      await admin.messaging().send({
-        token: ADMIN_PUSH_TOKEN,
-        notification: {
-          title: "🛒 New Order Received",
-          body: `Order from ${saved.customerName}`,
-        },
-      });
+    if (!ADMIN_PUSH_TOKEN) {
+      console.log("❌ ADMIN_PUSH_TOKEN IS NULL — push not sent");
+    } else {
+      console.log("📤 SENDING PUSH TO ADMIN...");
+
+      try {
+        const response = await admin.messaging().send({
+          token: ADMIN_PUSH_TOKEN,
+          notification: {
+            title: "🛒 New Order Received",
+            body: `Order from ${saved.customerName}`,
+          },
+          android: {
+            priority: "high",
+          },
+          webpush: {
+            headers: {
+              Urgency: "high",
+            },
+          },
+        });
+
+        console.log("✅ PUSH SENT SUCCESSFULLY:", response);
+      } catch (err) {
+        console.error("❌ PUSH FAILED:", err);
+      }
     }
+
     res.status(201).json({
       success: true,
       order: saved,
