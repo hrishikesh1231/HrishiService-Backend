@@ -9,8 +9,6 @@ const { Order } = require("./models/Order"); // ensure model exports correctly
 const cloudinary = require("cloudinary").v2;
 const axios = require("axios");
 
-const twilio = require("twilio");
-
 dotenv.config();
 
 const app = express();
@@ -65,45 +63,6 @@ const upload = multer({
   limits: { fileSize: 12 * 1024 * 1024 }, // 12 MB
 });
 
-async function sendAdminWhatsAppNotification(order) {
-  try {
-    let itemsText = "";
-    try {
-      const parsedItems =
-        typeof order.items === "string"
-          ? JSON.parse(order.items)
-          : order.items;
-
-      itemsText = parsedItems
-        .map((i) => `• ${i.name} x ${i.qty}`)
-        .join("\n");
-    } catch {
-      itemsText = order.items;
-    }
-
-    const message = `
-🛒 New Order Arrived!
-
-👤 Name: ${order.customerName}
-📞 Phone: ${order.customerPhone}
-📍 Address: ${order.address}
-🆔 Order ID: ${order.orderId}
-
-📦 Items:
-${itemsText}
-    `;
-
-    await twilioClient.messages.create({
-      from: process.env.TWILIO_WHATSAPP_FROM,
-      to: process.env.ADMIN_WHATSAPP,
-      body: message,
-    });
-
-    console.log("✅ Admin WhatsApp notification sent");
-  } catch (err) {
-    console.error("❌ Twilio WhatsApp error:", err.message);
-  }
-}
 
 // Helper function to upload buffer to cloudinary
 function uploadBufferToCloudinary(buffer, folder = "prescriptions") {
@@ -163,7 +122,6 @@ app.post("/place-order", upload.single("prescription"), async (req, res) => {
     });
 
     const saved = await order.save();
-    await sendAdminWhatsAppNotification(saved);
     res.status(201).json({
       success: true,
       order: saved,
