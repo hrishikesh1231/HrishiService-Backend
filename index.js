@@ -16,6 +16,8 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+const admin = require("./firebase");
+let ADMIN_PUSH_TOKEN = null;
 
 
 
@@ -74,6 +76,14 @@ function uploadBufferToCloudinary(buffer, folder = "prescriptions") {
   });
 }
 
+
+
+//notification firebase
+app.post("/api/save-admin-push-token", (req, res) => {
+  ADMIN_PUSH_TOKEN = req.body.token;
+  res.json({ success: true });
+});
+
 // -----------------------------------
 // POST — SAVE ORDER
 // -----------------------------------
@@ -118,6 +128,16 @@ app.post("/place-order", upload.single("prescription"), async (req, res) => {
     });
 
     const saved = await order.save();
+
+    if (ADMIN_PUSH_TOKEN) {
+      await admin.messaging().send({
+        token: ADMIN_PUSH_TOKEN,
+        notification: {
+          title: "🛒 New Order Received",
+          body: `Order from ${saved.customerName}`,
+        },
+      });
+    }
     res.status(201).json({
       success: true,
       order: saved,
