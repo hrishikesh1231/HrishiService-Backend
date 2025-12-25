@@ -9,6 +9,9 @@ const { Order } = require("./models/Order"); // ensure model exports correctly
 const cloudinary = require("cloudinary").v2;
 const axios = require("axios");
 
+// const { notifyAdminNewOrder } = require("./telegram")
+
+
 dotenv.config();
 
 const app = express();
@@ -18,6 +21,7 @@ app.use(express.urlencoded({ extended: true }));
 
 let ADMIN_PUSH_TOKEN = null;
 const admin = require("./firebase");
+const { notifyAdminNewOrder } = require("./telegram");
 
 
 
@@ -129,6 +133,7 @@ app.post("/place-order", upload.single("prescription"), async (req, res) => {
     });
 
     const saved = await order.save();
+    await notifyAdminNewOrder();
     console.log("✅ ORDER SAVED:", saved.orderId);
 
     if (!ADMIN_PUSH_TOKEN) {
