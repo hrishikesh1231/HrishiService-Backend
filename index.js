@@ -89,7 +89,8 @@ async function sendAdminWhatsAppNotification(order) {
 📍 Address: ${order.address}
 🆔 Order ID: ${order.orderId}
 
-
+📦 Items:
+${itemsText}
     `;
 
     await twilioClient.messages.create({
