@@ -20,7 +20,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 let ADMIN_PUSH_TOKEN = null;
-const admin = require("./firebase");
+
 const { notifyAdminNewOrder } = require("./telegram");
 
 
@@ -133,37 +133,10 @@ app.post("/place-order", upload.single("prescription"), async (req, res) => {
     });
 
     const saved = await order.save();
-    await notifyAdminNewOrder();
+    await notifyAdminNewOrder(saved);
     console.log("✅ ORDER SAVED:", saved.orderId);
 
-    if (!ADMIN_PUSH_TOKEN) {
-      console.log("❌ ADMIN_PUSH_TOKEN IS NULL — push not sent");
-    } else {
-      console.log("📤 SENDING PUSH TO ADMIN...");
-
-      try {
-        const response = await admin.messaging().send({
-          token: ADMIN_PUSH_TOKEN,
-          notification: {
-            title: "🛒 New Order Received",
-            body: `Order from ${saved.customerName}`,
-          },
-          android: {
-            priority: "high",
-          },
-          webpush: {
-            headers: {
-              Urgency: "high",
-            },
-          },
-        });
-
-        console.log("✅ PUSH SENT SUCCESSFULLY:", response);
-      } catch (err) {
-        console.error("❌ PUSH FAILED:", err);
-      }
-    }
-
+    
     res.status(201).json({
       success: true,
       order: saved,
